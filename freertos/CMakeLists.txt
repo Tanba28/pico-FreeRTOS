@@ -1,4 +1,4 @@
-set(PICO_FREERTOS_SOURCE FreeRTOS-Kernel)
+set(PICO_FREERTOS_SOURCE Kernel)
 
 add_library(freertos
     ${PICO_FREERTOS_SOURCE}/event_groups.c
