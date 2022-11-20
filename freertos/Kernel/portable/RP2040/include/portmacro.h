@@ -1,8 +1,9 @@
 /*
- * FreeRTOS Kernel V10.5.0
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.4.3
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
  *
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: MIT AND BSD-3-Clause
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +27,6 @@
  *
  */
 
-
 #ifndef PORTMACRO_H
     #define PORTMACRO_H
 
@@ -34,6 +34,7 @@
         extern "C" {
     #endif
 
+    #include "pico.h"
 /*-----------------------------------------------------------
  * Port specific definitions.
  *
@@ -53,9 +54,9 @@
     #define portSTACK_TYPE    uint32_t
     #define portBASE_TYPE     long
 
-    typedef portSTACK_TYPE   StackType_t;
-    typedef long             BaseType_t;
-    typedef unsigned long    UBaseType_t;
+    typedef portSTACK_TYPE    StackType_t;
+    typedef int32_t           BaseType_t;
+    typedef uint32_t          UBaseType_t;
 
     #if ( configUSE_16_BIT_TICKS == 1 )
         typedef uint16_t     TickType_t;
@@ -75,6 +76,13 @@
     #define portTICK_PERIOD_MS    ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
     #define portBYTE_ALIGNMENT    8
     #define portDONT_DISCARD      __attribute__( ( used ) )
+    /* We have to use PICO_DIVIDER_DISABLE_INTERRUPTS as the source of truth rathern than our config,
+     * as our FreeRTOSConfig.h header cannot be included by ASM code - which is what this affects in the SDK */
+    #define portUSE_DIVIDER_SAVE_RESTORE !PICO_DIVIDER_DISABLE_INTERRUPTS
+    #if portUSE_DIVIDER_SAVE_RESTORE
+    #define portSTACK_LIMIT_PADDING 4
+    #endif
+
 /*-----------------------------------------------------------*/
 
 
@@ -83,21 +91,39 @@
     #define portNVIC_INT_CTRL_REG     ( *( ( volatile uint32_t * ) 0xe000ed04 ) )
     #define portNVIC_PENDSVSET_BIT    ( 1UL << 28UL )
     #define portYIELD()                                 vPortYield()
-    #define portEND_SWITCHING_ISR( xSwitchRequired )    do { if( xSwitchRequired ) portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT; } while( 0 )
+    #define portEND_SWITCHING_ISR( xSwitchRequired )    if( xSwitchRequired ) portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT
     #define portYIELD_FROM_ISR( x )                     portEND_SWITCHING_ISR( x )
+
 /*-----------------------------------------------------------*/
 
+/* Exception handlers */
+    #if (configUSE_DYNAMIC_EXCEPTION_HANDLERS == 0)
+        /* We only need to override the SDK's weak functions if we want to replace them at compile time */
+        #define vPortSVCHandler isr_svcall
+        #define xPortPendSVHandler isr_pendsv
+        #define xPortSysTickHandler isr_systick
+    #endif
+
+    #define portCHECK_IF_IN_ISR() ({ \
+        uint32_t ulIPSR;                                                  \
+       __asm volatile ("mrs %0, IPSR" : "=r" (ulIPSR)::);             \
+       ((uint8_t)ulIPSR)>0;})
+
+/*-----------------------------------------------------------*/
 
 /* Critical section management. */
-    extern void vPortEnterCritical( void );
-    extern void vPortExitCritical( void );
     extern uint32_t ulSetInterruptMaskFromISR( void ) __attribute__( ( naked ) );
     extern void vClearInterruptMaskFromISR( uint32_t ulMask )  __attribute__( ( naked ) );
-
     #define portSET_INTERRUPT_MASK_FROM_ISR()         ulSetInterruptMaskFromISR()
     #define portCLEAR_INTERRUPT_MASK_FROM_ISR( x )    vClearInterruptMaskFromISR( x )
+
     #define portDISABLE_INTERRUPTS()                  __asm volatile ( " cpsid i " ::: "memory" )
-    #define portENABLE_INTERRUPTS()                   __asm volatile ( " cpsie i " ::: "memory" )
+
+    extern void vPortEnableInterrupts();
+    #define portENABLE_INTERRUPTS()                   vPortEnableInterrupts()
+
+    extern void vPortEnterCritical( void );
+    extern void vPortExitCritical( void );
     #define portENTER_CRITICAL()                      vPortEnterCritical()
     #define portEXIT_CRITICAL()                       vPortExitCritical()
 

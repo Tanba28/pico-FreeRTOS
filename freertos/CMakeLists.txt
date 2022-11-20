@@ -1,18 +1,21 @@
-set(PICO_FREERTOS_SOURCE Kernel)
-
 add_library(freertos
-    ${PICO_FREERTOS_SOURCE}/event_groups.c
-    ${PICO_FREERTOS_SOURCE}/list.c
-    ${PICO_FREERTOS_SOURCE}/queue.c
-    ${PICO_FREERTOS_SOURCE}/stream_buffer.c
-    ${PICO_FREERTOS_SOURCE}/tasks.c
-    ${PICO_FREERTOS_SOURCE}/timers.c
-    ${PICO_FREERTOS_SOURCE}/portable/MemMang/heap_3.c
-    ${PICO_FREERTOS_SOURCE}/portable/GCC/ARM_CM0/port.c
-)
+    ${FREERTOS_KERNEL_PATH}/event_groups.c
+    ${FREERTOS_KERNEL_PATH}/list.c
+    ${FREERTOS_KERNEL_PATH}/queue.c
+    ${FREERTOS_KERNEL_PATH}/stream_buffer.c
+    ${FREERTOS_KERNEL_PATH}/tasks.c
+    ${FREERTOS_KERNEL_PATH}/timers.c
+    ${FREERTOS_KERNEL_PATH}/portable/MemMang/heap_4.c
+    ${FREERTOS_KERNEL_PATH}/portable/RP2040/port.c
+    )
 
 target_include_directories(freertos PUBLIC
     .
-    ${PICO_FREERTOS_SOURCE}/include
-    ${PICO_FREERTOS_SOURCE}/portable/GCC/ARM_CM0
+    ${FREERTOS_KERNEL_PATH}/include
+    ${FREERTOS_KERNEL_PATH}/portable/RP2040/include
+    )
+
+target_link_libraries(freertos PUBLIC
+    pico_stdlib
+    hardware_exception
 )
