@@ -7,6 +7,7 @@ add_library(freertos
     ${FREERTOS_KERNEL_PATH}/timers.c
     ${FREERTOS_KERNEL_PATH}/portable/MemMang/heap_4.c
     ${FREERTOS_KERNEL_PATH}/portable/RP2040/port.c
+    hook.c
     )
 
 target_include_directories(freertos PUBLIC
