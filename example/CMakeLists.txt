@@ -1,4 +1,4 @@
-add_executable(example main.cpp)
+add_executable(example main.cpp hook.c)
 
 target_link_libraries(example pico_stdlib freertos)
 
