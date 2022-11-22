@@ -321,6 +321,68 @@ void vPortFree( void * pv )
 }
 /*-----------------------------------------------------------*/
 
+size_t getBlockSize( void *pv )
+{
+
+	uint8_t *puc = ( uint8_t * ) pv;
+	BlockLink_t *pxLink;
+
+	puc -= xHeapStructSize;
+	pxLink = ( void * ) puc;
+
+	size_t count = pxLink->xBlockSize & ~xBlockAllocatedBit;
+
+	return count;
+}
+/*-----------------------------------------------------------*/
+
+void *pvPortRealloc( void *pv, size_t xWantedSize )
+{
+	vTaskSuspendAll();
+
+	void * newmem = pvPortMalloc(xWantedSize);
+
+	if (newmem != NULL && pv != NULL)
+	{
+		uint8_t *puc = ( uint8_t * ) pv;
+		BlockLink_t *pxLink;
+
+		puc -= xHeapStructSize;
+		pxLink = ( void * ) puc;
+
+
+		char *in_src = (char*)pv;
+		char *in_dest = (char*)newmem;
+
+		size_t count = (pxLink->xBlockSize & ~xBlockAllocatedBit) - xHeapStructSize;
+		if (xWantedSize < count) count = xWantedSize;
+
+		while (count--) *in_dest++ = *in_src++;
+
+		vPortFree(pv);
+	}
+
+	( void ) xTaskResumeAll();
+
+	return newmem;
+}
+/*-----------------------------------------------------------*/
+
+void *pvPortCalloc( size_t num, size_t xWantedSize )
+{
+	vTaskSuspendAll();
+	size_t count = xWantedSize*num;
+
+	void * mem = pvPortMalloc(count);
+  	char *in_dest = (char*)mem;
+
+  	while(count--)
+    	*in_dest++ = 0;
+
+	( void ) xTaskResumeAll();
+  	return mem;
+}
+
 size_t xPortGetFreeHeapSize( void )
 {
     return xFreeBytesRemaining;
