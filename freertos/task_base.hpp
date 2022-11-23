@@ -12,14 +12,14 @@ class TaskBase {
 
         }
         virtual ~TaskBase(){
-            delete_task();
+            deleteTask();
         }
 
-        void create_task(){
-            xTaskCreate(task_entry_point,name,stack_size,this,priority,&handle);
+        void createTask(){
+            xTaskCreate(taskEntryPoint,name,stack_size,this,priority,&handle);
         }
 
-        void delete_task(){
+        void deleteTask(){
             vTaskDelete(handle);
         }
 
@@ -31,7 +31,7 @@ class TaskBase {
 
         virtual void task() = 0;
 
-        static void task_entry_point(void* task_instance){
+        static void taskEntryPoint(void* task_instance){
             static_cast<TaskBase*>(task_instance)->task();
         }
 };
