@@ -1,6 +1,6 @@
 add_executable(example main.cpp)
 
-target_link_libraries(example pico_stdlib freertos)
+target_link_libraries(example pico_stdlib pico-FreeRTOS)
 
 pico_enable_stdio_usb(example 1)
 pico_enable_stdio_uart(example 0)

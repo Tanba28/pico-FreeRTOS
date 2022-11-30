@@ -1,4 +1,4 @@
-add_library(freertos
+add_library(pico-FreeRTOS
     ${FREERTOS_KERNEL_PATH}/event_groups.c
     ${FREERTOS_KERNEL_PATH}/list.c
     ${FREERTOS_KERNEL_PATH}/queue.c
@@ -10,13 +10,13 @@ add_library(freertos
     hook.c
     )
 
-target_include_directories(freertos PUBLIC
+target_include_directories(pico-FreeRTOS PUBLIC
     .
     ${FREERTOS_KERNEL_PATH}/include
     ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/include
     )
 
-target_link_libraries(freertos PUBLIC
+target_link_libraries(pico-FreeRTOS PUBLIC
     pico_stdlib
     pico_base_headers
     hardware_clocks
@@ -24,7 +24,7 @@ target_link_libraries(freertos PUBLIC
     pico_multicore
 )
 
-target_compile_definitions(freertos PUBLIC
+target_compile_definitions(pico-FreeRTOS PUBLIC
     LIB_FREERTOS_KERNEL=1
     FREE_RTOS_KERNEL_SMP=1
 )
